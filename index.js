@@ -3,10 +3,8 @@ const path = require("path");
 
 const app = express();
 
-// Serve static files (css, js, gambar, dll)
 app.use(express.static(path.join(__dirname, "../public")));
 
-// Route halaman
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../public/index.html"));
 });
