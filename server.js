@@ -8,14 +8,14 @@ const PORT = 3000;
 
 let messageHistory = [];
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, "public")));
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-app.get('/send', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'send.html'));
+app.get("/send", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "send.html"));
 });
 
 io.on('connection', (socket) => {
