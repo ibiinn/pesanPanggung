@@ -4,14 +4,14 @@ const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 const app = express();
 
-app.use(express.static(path.join(__dirname, "../public")));
+app.use(express.static(path.join(__dirname, "../")));
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public/index.html"));
+  res.sendFile(path.join(__dirname, "../index.html"));
 });
 
 app.get("/send", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public/send.html"));
+  res.sendFile(path.join(__dirname, "../send.html"));
 });
 
 io.on('connection', (socket) => {
