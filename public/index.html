@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Message</title>
+    <style>
+        body { 
+            background-color: rgb(85, 255, 0); 
+            color: #e2e8f0; 
+            font-family: monospace; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+            padding-top: 20px; 
+        }
+
+        h1 { 
+            color: #7ab2c8; 
+            text-transform: uppercase; 
+            letter-spacing: 2px; 
+        }
+
+        #message-container { 
+            width: 90%; 
+            max-width: 500px; 
+            display: flex; 
+            flex-direction: column-reverse; 
+            gap: 15px; 
+            margin-bottom: 20px;
+        }
+       
+        .msg-card { 
+            background: rgba(58, 60, 60, 0.8); 
+            padding: 15px; 
+            border-radius: 12px; 
+            border: 1px solid rgba(255,255,255,0.1); 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.5);
+        }
+        .msg-user { 
+            color: #7ab2c8;
+            font-size: 0.9rem; 
+            font-weight: bold; 
+            margin-bottom: 5px; 
+            display: block; 
+        }
+
+        .msg-text { 
+            font-size: 1.2rem; 
+            font-weight: normal; 
+            word-wrap: break-word; 
+            color: #fff; 
+        }
+
+        .msg-time { 
+            font-size: 0.7rem; 
+            color: #c0cee3; 
+            display: block; 
+            text-align: right; 
+            margin-top: 8px; }
+        
+        .btn-link { 
+            background: #fff; 
+            color: #000; 
+            padding: 10px 20px; 
+            text-decoration: none; 
+            border-radius: 5px; 
+            font-weight: bold; 
+            margin-top: 20px;
+        }
+        
+    </style>
+</head>
+<body>
+    <h1>Chat on Stage</h1>
+    <div id="message-container">
+        <div style="color:gray; text-align:center;">Menunggu pesan...</div>
+    </div>
+    
+    <a href="/send" target="_blank" class="btn-link">Kirim Pesan</a>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const container = document.getElementById('message-container');
+
+        function render(msgs) {
+            container.innerHTML = '';
+            if(msgs.length === 0) {
+                container.innerHTML = '<div style="color:gray; text-align:center;">Belum ada pesan...</div>';
+                return;
+            }
+            msgs.slice().reverse().forEach(msg => {
+                const div = document.createElement('div');
+                div.className = 'msg-card';
+                div.innerHTML = `
+                    <span class="msg-user">@${msg.username}</span>
+                    <div class="msg-text">${msg.text}</div>
+                    <span class="msg-time">${msg.time}</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+        socket.on('init_messages', render);
+        socket.on('update_messages', render);
+    </script>
+</body>
+</html>

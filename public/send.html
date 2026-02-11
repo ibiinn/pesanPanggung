@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kirim Pesan</title>
+    <style>
+        body { 
+            background: hsl(48, 40%, 22%); 
+            color: white; 
+            font-family: sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+        }
+
+        form { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; width: 85%; 
+            max-width: 400px; 
+        }
+
+        h2 { 
+            text-align: center; 
+            color: #7ab2c8; 
+            margin-bottom: 5px; 
+        }
+        
+        input, textarea { 
+            padding: 15px; 
+            border-radius: 10px; 
+            background: #443a0d; 
+            color: white; 
+            border: 1px solid #bcbdbe; 
+            font-size: 1rem; 
+            outline: none;
+        }
+        input:focus, textarea:focus { 
+            border-color: #38bdf8; 
+        }
+        
+        textarea { 
+            height: 120px; 
+            resize: none; 
+        }
+        
+        button { 
+            padding: 15px; 
+            background: #114d66; 
+            border: 1; 
+            border-radius: 10px; 
+            font-weight: bold; 
+            font-size: 1.1rem; 
+            color: #b7d4e8; 
+            cursor: pointer; 
+        }
+
+        button:active { 
+            transform: scale(0.98); 
+        }
+
+    </style>
+</head>
+<body>
+    <form id="f">
+        <h2>Kirim Pesan</h2>
+        <input id="u" type="text" placeholder="Username (max 10 char)" maxlength="10" required>
+        <textarea id="i" placeholder="Ketik pesanmu..." required maxlength="100"></textarea>
+        <button type="submit">kirim sekarang</button>
+    </form>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const form = document.getElementById('f');
+        const inputUser = document.getElementById('u');
+        const inputMsg = document.getElementById('i');
+
+        // Load username terakhir biar gak ngetik ulang terus
+        if(localStorage.getItem('my_username')) {
+            inputUser.value = localStorage.getItem('my_username');
+        }
+
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            const user = inputUser.value.trim();
+            const text = inputMsg.value.trim();
+
+            if(user && text) {
+                // Simpan username biar ingat
+                localStorage.setItem('my_username', user);
+
+                socket.emit('new_message', { username: user, text: text });
+                
+                inputMsg.value = ''; // Hapus pesan aja, username tetep biarin
+                alert('Terkirim!');
+            }
+        });
+    </script>
+</body>
+</html>
