@@ -5,40 +5,48 @@
     <title>Kirim Pesan</title>
     <style>
         body { 
-            background: hsl(48, 40%, 22%); 
-            color: white; 
+            background: hsl(47, 45%, 86%); 
             font-family: sans-serif; 
             display: flex; 
             justify-content: center; 
             align-items: center; 
             height: 100vh; 
             margin: 0; 
+            background-image: url("/bg.png");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
 
         form { 
             display: flex; 
             flex-direction: column; 
-            gap: 15px; width: 85%; 
+            gap: 15px; 
+            width: 85%; 
             max-width: 400px; 
         }
 
         h2 { 
+            font-size: 2.4rem;
             text-align: center; 
-            color: #7ab2c8; 
+            color: #DBD538; 
             margin-bottom: 5px; 
+            text-shadow: 2px 2px 15px rgba(0, 0, 0, 0.6);
         }
         
         input, textarea { 
             padding: 15px; 
-            border-radius: 10px; 
-            background: #443a0d; 
+            border-radius: 15px; 
+            background: rgba(0, 0, 0, 0.5); 
             color: white; 
-            border: 1px solid #bcbdbe; 
+            border: none; 
             font-size: 1rem; 
             outline: none;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6);
         }
+
         input:focus, textarea:focus { 
-            border-color: #38bdf8; 
+            border-color: #ffe224; 
         }
         
         textarea { 
@@ -48,27 +56,88 @@
         
         button { 
             padding: 15px; 
-            background: #114d66; 
-            border: 1; 
+            background: #224230; 
+            border: none; 
             border-radius: 10px; 
-            font-weight: bold; 
+            font-weight: 700; 
             font-size: 1.1rem; 
-            color: #b7d4e8; 
+            color: #f0f1be; 
             cursor: pointer; 
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6);
         }
 
         button:active { 
             transform: scale(0.98); 
         }
 
+        .cb input{
+            margin-top: -1.3rem;
+            background-color: #DBD538;
+            align-items: center;
+            display: none;
+        }
+        .checkmark {
+            width: 20px;
+            height: 20px;
+            border-radius: 6px;
+            border: 1px solid #f0f1be;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: -1rem;
+            justify-content: center;
+        }
+
+        .cb input:checked + .checkmark {
+            background: #11662d;
+            border-color: #f0f1be;
+        }
+
+        .cb input:checked + .checkmark::after {
+            content: "✓";
+            color: white;
+        }
+
+        .checkbox-wrap {
+            display: flex;
+            justify-content: center;
+        }
+
+        p {
+            margin-bottom: 1.8rem;
+            text-align: center;
+            color: beige;
+            text-shadow: 2px 2px 15px rgba(0, 0, 0, 0.6);
+        }
+
+        .wrap {
+            background-color: rgb(0, 0, 0, 0.4);
+            padding: 0.5rem;
+            border-radius: 15px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6);
+        }
+
+
     </style>
 </head>
 <body>
     <form id="f">
         <h2>Kirim Pesan</h2>
+        <div class="wrap">
+            <p>Saya bertanggung jawab atas chat yang saya tampilkan di layar dan bersedia untuk tidak menggunakan kata-kata yang tidak pantas.<br></p>
+            <div class="checkbox-wrap">
+                <label class="cb">
+                    <input type="checkbox" id="agree">
+                    <span class="checkmark"></span>
+                </label>
+            </div>
+        </div>
+
+        
         <input id="u" type="text" placeholder="Username (max 10 char)" maxlength="10" required>
         <textarea id="i" placeholder="Ketik pesanmu..." required maxlength="100"></textarea>
         <button type="submit">kirim sekarang</button>
+        <p>Kalau ada yang mau request lagu boleh langsung dm ke instagram @djamoancoffe atau gunakan saweria di bawah ini. </p>
     </form>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -77,6 +146,17 @@
         const form = document.getElementById('f');
         const inputUser = document.getElementById('u');
         const inputMsg = document.getElementById('i');
+        const agree = document.getElementById('agree');
+        const btn = document.querySelector("button[type='submit']");
+        const savedUsername = localStorage.getItem("locked_username");
+        const user = inputUser.value.trim();
+        
+        if (savedUsername) {
+            inputUser.value = savedUsername;
+            inputUser.readOnly = true;      // kunci input
+            inputUser.style.opacity = "0.7";
+            inputUser.style.cursor = "not-allowed";
+        }
 
         // Load username terakhir biar gak ngetik ulang terus
         if(localStorage.getItem('my_username')) {
@@ -88,16 +168,51 @@
             const user = inputUser.value.trim();
             const text = inputMsg.value.trim();
 
-            if(user && text) {
-                // Simpan username biar ingat
-                localStorage.setItem('my_username', user);
-
-                socket.emit('new_message', { username: user, text: text });
-                
-                inputMsg.value = ''; // Hapus pesan aja, username tetep biarin
-                alert('Terkirim!');
+            if (!agree.checked) {
+                e.preventDefault();
+                alert("Centang checkbox dulu sebelum kirim pesan!");
+                return;
             }
+
+            if (!user || !text) return; 
+
+            if (!localStorage.getItem("locked_username") && user) {
+                sessionStorage.setItem("locked_username", user);
+                inputUser.readOnly = true;
+                inputUser.style.opacity = "0.7";
+                inputUser.style.cursor = "not-allowed";
+            }
+
+            socket.emit('new_message', { 
+                    username: user, 
+                    text,
+                    deviceId,
+                    agree: true
+            });
+         });
+       
+        socket.on("username_taken", () => {
+            alert("Username sudah dipakai user lain, ganti ya!");
         });
+
+        let deviceId = localStorage.getItem("device_id");
+        if (!deviceId) {
+            deviceId = crypto.randomUUID(); // browser modern
+            localStorage.setItem("device_id", deviceId);
+        }
+
+        socket.on("username_locked", () => {
+            alert("Usernamenya gaboleh diganti yaa kak :)");
+        });
+
+        socket.on("send_success", () => {
+            alert("Terkirim!");
+        });
+
+        socket.on("must_check_agree", () => {
+            alert("Centang checkbox dulu sebelum kirim pesan!");
+        });
+
     </script>
 </body>
 </html>
