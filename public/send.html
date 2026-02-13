@@ -177,7 +177,7 @@
             if (!user || !text) return; 
 
             if (!localStorage.getItem("locked_username") && user) {
-                sessionStorage.setItem("locked_username", user);
+                localStorage.setItem("locked_username", user);
                 inputUser.readOnly = true;
                 inputUser.style.opacity = "0.7";
                 inputUser.style.cursor = "not-allowed";
