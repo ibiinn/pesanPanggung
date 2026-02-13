@@ -3,7 +3,22 @@ const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 const path = require('path');
+const MAX_WORDS = 20;
 
+//ban kata kasar
+const bannedWords = [
+  "anjing", "kontol", "memek", "tolol", "goblok", "ngentot"
+];
+
+
+function containsBadWord(text) {
+    const lower = text.toLowerCase();
+    return bannedWords.some(word => lower.includes(word));
+}
+
+function countWords(text) {
+    return text.trim().split(/\s+/).length;
+}
 
 const PORT = process.env.PORT || 3000;
 
@@ -27,6 +42,7 @@ io.on('connection', (socket) => {
     socket.on('new_message', (data) => {
         const rawUser = (data.username || 'Anonim').trim();
         const deviceId = data.deviceId;
+        const text = data.text || "";
         
         if (!data.agree) {
             socket.emit("must_check_agree");
@@ -51,7 +67,18 @@ io.on('connection', (socket) => {
                 socket.emit("username_taken");
                 return;
             }
+        
+        if (countWords(text) > MAX_WORDS) {
+                socket.emit("max_word_exceeded");
+                return;
+            }
+
+        if (containsBadWord(text)) {
+                socket.emit("bad_word");
+                return;
+            }
         }
+
         // simpan username ke socket + set user aktif
         socket.username = rawUser;
         socket.deviceId = deviceId;
@@ -68,7 +95,8 @@ io.on('connection', (socket) => {
         };
 
         messageHistory.push(messageData);
-        // Simpan 5 pesan terakhir
+
+        // Simpan 7 pesan terakhir
         if (messageHistory.length > 7) messageHistory.shift();
         
         io.emit('update_messages', messageHistory);

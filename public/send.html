@@ -5,7 +5,7 @@
     <title>Kirim Pesan</title>
     <style>
         body { 
-            background: hsl(47, 45%, 86%); 
+            background: #224230; 
             font-family: sans-serif; 
             display: flex; 
             justify-content: center; 
@@ -27,6 +27,7 @@
         }
 
         h2 { 
+            margin-top: -1.5rem;
             font-size: 2.4rem;
             text-align: center; 
             color: #DBD538; 
@@ -117,11 +118,37 @@
             box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6);
         }
 
+        a {
+            margin-bottom: 2rem;
+            text-align: center;
+            color: rgb(202, 202, 243);
+        }
+
+        img {
+            width: 120px;
+            height: 120px;
+            border-radius: 10rem;
+        }
+
+        .img-s {
+            display: flex;
+            justify-content: center;
+            background-image: url(/f16614f8-f2b1-4cfc-b8a9-674f495f9904.jpg);
+            margin: 2.5rem;
+            padding-bottom: 6rem;
+            border-radius: 100rem;
+            background-size: cover;
+        }
+
 
     </style>
 </head>
 <body>
     <form id="f">
+        <div class="img-s">
+            <img src="" alt="">
+            <!-- <img src="/WhatsApp Image 2026-02-13 at 15.29.31.jpeg" alt="Djamoan"> -->
+        </div>
         <h2>Kirim Pesan</h2>
         <div class="wrap">
             <p>Saya bertanggung jawab atas chat yang saya tampilkan di layar dan bersedia untuk tidak menggunakan kata-kata yang tidak pantas.<br></p>
@@ -135,9 +162,11 @@
 
         
         <input id="u" type="text" placeholder="Username (max 10 char)" maxlength="10" required>
-        <textarea id="i" placeholder="Ketik pesanmu..." required maxlength="100"></textarea>
+        <textarea id="i" placeholder="Ketik pesanmu..." required maxlength=""></textarea>
         <button type="submit">kirim sekarang</button>
         <p>Kalau ada yang mau request lagu boleh langsung dm ke instagram @djamoancoffe atau gunakan saweria di bawah ini. </p>
+        <a href="#">https://saweria.co/djamoancoffee</a>
+
     </form>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -150,7 +179,18 @@
         const btn = document.querySelector("button[type='submit']");
         const savedUsername = localStorage.getItem("locked_username");
         const user = inputUser.value.trim();
+        const bannedWords = ["anjing", "babi", "kontol", "memek", "ngentot", "tai"];
+        const MAX_WORDS = 20;
         
+        function containsBadWord(text) {
+            const lower = text.toLowerCase();
+            return bannedWords.some(word => lower.includes(word));
+        }
+
+        function countWords(text) {
+            return text.trim().split(/\s+/).length;
+        }
+
         if (savedUsername) {
             inputUser.value = savedUsername;
             inputUser.readOnly = true;      // kunci input
@@ -183,6 +223,16 @@
                 inputUser.style.cursor = "not-allowed";
             }
 
+            if (countWords(text) > MAX_WORDS) {
+                alert(`Pesan maksimal ${MAX_WORDS} kata!`);
+                return;
+            }
+
+            if (containsBadWord(text)) {
+                alert("Pesan mengandung kata tidak pantas!");
+                return;
+            }
+
             socket.emit('new_message', { 
                     username: user, 
                     text,
@@ -211,6 +261,10 @@
 
         socket.on("must_check_agree", () => {
             alert("Centang checkbox dulu sebelum kirim pesan!");
+        });
+
+        socket.on("max_word_exceeded", () => {
+            alert("Pesan terlalu panjang! Maksimal 20 kata.");
         });
 
     </script>
