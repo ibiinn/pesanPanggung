@@ -5,6 +5,7 @@ const io = require('socket.io')(http);
 const path = require('path');
 const MAX_WORDS = 20;
 
+
 //ban kata kasar
 const bannedWords = [
   "anjing", "kontol", "memek", "tolol", "goblok", "ngentot"

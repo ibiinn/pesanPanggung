@@ -219,7 +219,11 @@
                     agree: true
             });
          });
-       
+        
+        socket.on("send_success", () => {
+            inputMsg.value = "";   // pesan kehapus
+            inputMsg.focus();     // cursor balik ke input
+        });
         socket.on("username_taken", () => {
             alert("Username sudah dipakai user lain, ganti ya!");
         });
