@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kirim Pesan</title>
+    <style>
+        body { 
+            background: #224230; 
+            font-family: sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            background-image: url("/bg.png");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        form { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+            width: 85%; 
+            max-width: 400px; 
+        }
+
+        h2 { 
+            margin-top: -0.2rem;
+            font-size: 2.4rem;
+            text-align: center; 
+            color: #DBD538; 
+            margin-bottom: 5px; 
+            text-shadow: 2px 2px 15px rgba(0, 0, 0, 0.6);
+        }
+        
+        input, textarea { 
+            padding: 15px; 
+            border-radius: 15px; 
+            background: rgba(0, 0, 0, 0.5); 
+            color: white; 
+            border: none; 
+            font-size: 1rem; 
+            outline: none;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6);
+        }
+
+        input:focus, textarea:focus { 
+            border-color: #ffe224; 
+        }
+        
+        textarea { 
+            height: 120px; 
+            resize: none; 
+        }
+        
+        button { 
+            padding: 15px; 
+            background: #224230; 
+            border: none; 
+            border-radius: 10px; 
+            font-weight: 700; 
+            font-size: 1.1rem; 
+            color: #f0f1be; 
+            cursor: pointer; 
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6);
+        }
+
+        button:active { 
+            transform: scale(0.98); 
+        }
+
+        .cb input{
+            margin-top: -1.3rem;
+            background-color: #DBD538;
+            align-items: center;
+            display: none;
+        }
+        .checkmark {
+            width: 20px;
+            height: 20px;
+            border-radius: 6px;
+            border: 1px solid #f0f1be;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: -1rem;
+            justify-content: center;
+        }
+
+        .cb input:checked + .checkmark {
+            background: #11662d;
+            border-color: #f0f1be;
+        }
+
+        .cb input:checked + .checkmark::after {
+            content: "✓";
+            color: white;
+        }
+
+        .checkbox-wrap {
+            display: flex;
+            justify-content: center;
+        }
+
+        p {
+            margin-bottom: 1.8rem;
+            text-align: center;
+            color: beige;
+            text-shadow: 2px 2px 15px rgba(0, 0, 0, 0.6);
+        }
+        
+        form .sawer {
+            font-weight: bolder;
+        }
+
+        .wrap {
+            background-color: rgb(0, 0, 0, 0.4);
+            padding: 0.5rem;
+            border-radius: 15px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.6);
+        }
+
+        a {
+            text-align: center;
+            color: rgb(0, 0, 89);
+            background-color: #f0f1be;
+            padding: 1rem;
+            border-radius: 2rem;
+            text-decoration: none;
+            font-weight: 700;
+            color:#224230
+        }
+
+        .hbd img{
+            padding-right: 50px;
+            max-width: fit-content;
+            width: 120px;
+            border-radius: 45px;
+        }
+
+        .hbd h2{
+            font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-weight: lighter;
+            font-size: 25px;
+            text-align: left;
+            color: #000000;
+        }
+
+        .hbd {
+            height: 150px;
+            padding-left: 45px;
+            background: linear-gradient(to right, rgb(209, 131, 226), rgb(235, 235, 235));
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-radius: 15px;
+        }
+        
+
+    </style>
+</head>
+<body>
+    <form id="f">
+        <!-- sementara -->
+        <div class="hbd">
+            <h2>HAPPY BIRTHDAY RAHOM</h2>
+            <img src="rahom.png" alt="rahom">
+        </div>
+        <!-- sementara -->
+        <h2>Kirim Pesan</h2>
+        <div class="wrap">
+            <p>Saya bertanggung jawab atas chat yang saya tampilkan di layar dan bersedia untuk tidak menggunakan kata-kata yang tidak pantas.<br></p>
+            <div class="checkbox-wrap">
+                <label class="cb">
+                    <input type="checkbox" id="agree">
+                    <span class="checkmark"></span>
+                </label>
+            </div>
+        </div>
+        <input id="u" type="text" placeholder="Username (max 10 char)" maxlength="10" required>
+        <textarea id="i" placeholder="Ketik pesanmu..." required maxlength=""></textarea>
+        <button type="submit">kirim sekarang</button>
+        <a href="https://saweria.co/djamoancoffee">Request/Sawer</a>
+
+    </form>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const form = document.getElementById('f');
+        const inputUser = document.getElementById('u');
+        const inputMsg = document.getElementById('i');
+        const agree = document.getElementById('agree');
+        const btn = document.querySelector("button[type='submit']");
+        const savedUsername = localStorage.getItem("locked_username");
+        const user = inputUser.value.trim();
+        const bannedWords = ["anjing", "babi", "kontol", "memek", "ngentot", "tai"];
+        const MAX_WORDS = 20;
+        
+        function containsBadWord(text) {
+            const lower = text.toLowerCase();
+            return bannedWords.some(word => lower.includes(word));
+        }
+
+        function countWords(text) {
+            return text.trim().split(/\s+/).length;
+        }
+
+        if (savedUsername) {
+            inputUser.value = savedUsername;
+            inputUser.readOnly = true;      // kunci input
+            inputUser.style.opacity = "0.7";
+            inputUser.style.cursor = "not-allowed";
+        }
+
+        // Load username terakhir biar gak ngetik ulang terus
+        if(localStorage.getItem('my_username')) {
+            inputUser.value = localStorage.getItem('my_username');
+        }
+
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            const user = inputUser.value.trim();
+            const text = inputMsg.value.trim();
+
+            if (!agree.checked) {
+                e.preventDefault();
+                alert("Centang checkbox dulu sebelum kirim pesan!");
+                return;
+            }
+
+            if (!user || !text) return; 
+
+            if (!localStorage.getItem("locked_username") && user) {
+                localStorage.setItem("locked_username", user);
+                inputUser.readOnly = true;
+                inputUser.style.opacity = "0.7";
+                inputUser.style.cursor = "not-allowed";
+            }
+
+            if (countWords(text) > MAX_WORDS) {
+                alert(`Pesan maksimal ${MAX_WORDS} kata!`);
+                return;
+            }
+
+            if (containsBadWord(text)) {
+                alert("Pesan mengandung kata tidak pantas!");
+                return;
+            }
+
+            socket.emit('new_message', { 
+                    username: user, 
+                    text,
+                    deviceId,
+                    agree: true
+            });
+         });
+        
+        socket.on("send_success", () => {
+            inputMsg.value = "";   // pesan kehapus
+            inputMsg.focus();     // cursor balik ke input
+        });
+        socket.on("username_taken", () => {
+            alert("Username sudah dipakai user lain, ganti ya!");
+        });
+
+        let deviceId = localStorage.getItem("device_id");
+        if (!deviceId) {
+            deviceId = crypto.randomUUID(); // browser modern
+            localStorage.setItem("device_id", deviceId);
+        }
+
+        socket.on("username_locked", () => {
+            alert("Usernamenya gaboleh diganti yaa kak :)");
+        });
+
+        socket.on("send_success", () => {
+            alert("Terkirim!");
+        });
+
+        socket.on("must_check_agree", () => {
+            alert("Centang checkbox dulu sebelum kirim pesan!");
+        });
+
+        socket.on("max_word_exceeded", () => {
+            alert("Pesan terlalu panjang! Maksimal 20 kata.");
+        });
+
+    </script>
+</body>
+</html>
