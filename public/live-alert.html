@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live Alert</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: transparent;
+            color: #e2e8f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .alert-card {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) translateY(30px);
+            width: min(420px, calc(100% - 36px));
+            background: rgba(15, 23, 42, 0.96);
+            border: 1px solid rgba(56,189,248,0.22);
+            border-radius: 28px;
+            padding: 22px 22px 18px;
+            box-shadow: 0 30px 90px rgba(10, 22, 42, 0.35);
+            backdrop-filter: blur(18px);
+            opacity: 0;
+            transition: opacity 0.26s ease, transform 0.26s ease;
+            z-index: 1000;
+        }
+
+        .alert-card.visible {
+            opacity: 1;
+            transform: translate(-50%, -50%) translateY(0);
+        }
+
+        .alert-top {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .alert-badge {
+            width: 34px;
+            height: 34px;
+            border-radius: 14px;
+            background: rgba(56,189,248,0.2);
+            color: #38bdf8;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .alert-title {
+            font-size: 0.88rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: #7dd3fc;
+            margin: 0;
+        }
+
+        .alert-note {
+            color: #c7d2fe;
+            font-size: 0.86rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .alert-body {
+            margin-top: 12px;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 16px;
+            background: rgba(15, 23, 42, 0.85);
+        }
+
+        .alert-user {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+
+        .alert-user-name {
+            font-weight: 700;
+            color: #ffffff;
+            font-size: 1rem;
+        }
+
+        .alert-user-tag {
+            font-size: 0.78rem;
+            color: #94a3b8;
+            background: rgba(255,255,255,0.08);
+            border-radius: 999px;
+            padding: 6px 10px;
+        }
+
+        .alert-text {
+            color: #e2e8f0;
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .alert-note-text {
+            color: #cbd5e1;
+            font-size: 0.92rem;
+            line-height: 1.5;
+            margin-bottom: 12px;
+            font-style: italic;
+        }
+
+        .alert-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-time {
+            color: #94a3b8;
+            font-size: 0.8rem;
+        }
+
+        .alert-button {
+            background: rgba(56,189,248,0.18);
+            border: 1px solid rgba(56,189,248,0.32);
+            color: #dbeafe;
+            border-radius: 999px;
+            padding: 10px 16px;
+            font-size: 0.82rem;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.2s ease;
+        }
+
+        .alert-button:hover {
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+    <div class="alert-card" id="alert-card">
+        <div class="alert-top">
+            <div class="alert-badge">🎵</div>
+            <p class="alert-title">Request Lagu Berbayar</p>
+        </div>
+        <p class="alert-note">Notifikasi real-time untuk setiap request lagu yang sudah dibayar.</p>
+        <div class="alert-body">
+            <div class="alert-user">
+                <span class="alert-user-name" id="alert-user">@User</span>
+                <span class="alert-user-tag">TERBAYAR</span>
+            </div>
+            <p class="alert-text" id="alert-title">Judul Lagu</p>
+            <p class="alert-note-text" id="alert-note">Catatan</p>
+            <div class="alert-footer">
+                <span class="alert-time" id="alert-time">Sekarang</span>
+                <a href="/request" class="alert-button">Buat Request</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const alertCard = document.getElementById('alert-card');
+        const alertUser = document.getElementById('alert-user');
+        const alertTitle = document.getElementById('alert-title');
+        const alertNote = document.getElementById('alert-note');
+        const alertTime = document.getElementById('alert-time');
+        const socket = io();
+
+        let lastRequestId = null;
+        let audioContext = null;
+        let customSoundUrl = null;
+
+        // Load custom sound from localStorage on page load
+        const savedSound = localStorage.getItem('customNotificationSound');
+        if (savedSound) {
+            customSoundUrl = savedSound;
+            console.log('Custom sound loaded from localStorage');
+        }
+
+        function showAlert(user, songTitle, note, time) {
+            alertUser.textContent = `@${user}`;
+            alertTitle.textContent = songTitle;
+            alertNote.textContent = note || '(Tidak ada catatan)';
+            alertNote.style.display = note ? 'block' : 'block';
+            alertTime.textContent = time || 'Baru saja';
+            alertCard.classList.add('visible');
+
+            // Play notification sound
+            playNotificationSound();
+            
+            // Browser notification as fallback
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('Request Lagu Baru!', {
+                    body: `@${user}: ${songTitle}`,
+                    tag: 'request-notification'
+                });
+            }
+
+            clearTimeout(showAlert.hideTimeout);
+            showAlert.hideTimeout = setTimeout(() => {
+                alertCard.classList.remove('visible');
+            }, 5200);
+        }
+
+        function playNotificationSound() {
+            // Priority: Custom Sound > Default Melody
+            if (customSoundUrl) {
+                playCustomSound();
+            } else {
+                playMelodyNotification();
+            }
+        }
+
+        function playCustomSound() {
+            const audio = new Audio(customSoundUrl);
+            audio.volume = 1;
+            audio.play().catch(e => {
+                console.log('Custom sound play failed:', e);
+                playMelodyNotification(); // Fallback ke melody
+            });
+        }
+
+        function playMelodyNotification() {
+            // Method 1: Web Audio API - Melody Notification
+            try {
+                let ctx = audioContext || new (window.AudioContext || window.webkitAudioContext)();
+                const now = ctx.currentTime;
+                
+                // Melody sequence (like mobile notification)
+                const notes = [
+                    { freq: 523, duration: 0.15, delay: 0 },      // C5
+                    { freq: 659, duration: 0.15, delay: 0.18 },   // E5
+                    { freq: 784, duration: 0.3, delay: 0.36 }     // G5 (longer)
+                ];
+                
+                notes.forEach(note => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    
+                    osc.type = 'sine';
+                    osc.frequency.value = note.freq;
+                    gain.gain.setValueAtTime(1, now + note.delay);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + note.delay + note.duration);
+                    
+                    osc.start(now + note.delay);
+                    osc.stop(now + note.delay + note.duration);
+                });
+
+                audioContext = ctx;
+            } catch (e) {
+                console.log('Web Audio failed:', e);
+            }
+        }
+
+        // Request notification permission on load
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+
+        socket.on('connect', () => {
+            console.log('Alert page connected:', socket.id);
+        });
+
+        // Listen untuk update request lagu berbayar
+        socket.on('admin_request_update', (data) => {
+            const songRequests = data.song_requests || [];
+            
+            // Cari request terbaru yang sudah dibayar
+            const paidRequests = songRequests.filter(req => req.status === 'paid');
+            
+            if (paidRequests.length > 0) {
+                const latestRequest = paidRequests[paidRequests.length - 1];
+                
+                // Hanya tampil alert jika ini request baru
+                if (latestRequest.id !== lastRequestId) {
+                    lastRequestId = latestRequest.id;
+                    const timeStr = new Date(latestRequest.paidAt).toLocaleTimeString('id-ID', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    showAlert(latestRequest.username, latestRequest.song, latestRequest.note, timeStr);
+                }
+            }
+        });
+
+        // Emit listener untuk mendapatkan update saat admin mark request sebagai done
+        socket.on('admin_data', (data) => {
+            const songRequests = data.song_requests || [];
+            const paidRequests = songRequests.filter(req => req.status === 'paid');
+            
+            if (paidRequests.length > 0) {
+                const latestRequest = paidRequests[paidRequests.length - 1];
+                
+                if (latestRequest.id !== lastRequestId) {
+                    lastRequestId = latestRequest.id;
+                    const timeStr = new Date(latestRequest.paidAt).toLocaleTimeString('id-ID', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    showAlert(latestRequest.username, latestRequest.song, latestRequest.note, timeStr);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

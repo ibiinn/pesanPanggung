@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Status Pembayaran Xendit</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Inter, system-ui, sans-serif;
+            background: #0f172a;
+            color: white;
+        }
+        .container {
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(148, 163, 184, 0.15);
+            border-radius: 24px;
+            padding: 32px;
+            width: min(520px, 100%);
+            text-align: center;
+        }
+        h1 {
+            margin: 0;
+            font-size: 2rem;
+        }
+        p {
+            color: #cbd5e1;
+            line-height: 1.7;
+        }
+        .check-icon {
+            font-size: 3rem;
+            margin: 8px 0;
+        }
+        .button {
+            margin-top: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: #38bdf8;
+            color: #0f172a;
+            border: none;
+            border-radius: 16px;
+            padding: 14px 22px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .success-badge {
+            display: inline-block;
+            padding: 8px 18px;
+            border-radius: 40px;
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            font-weight: 700;
+            font-size: 1.4rem;
+            margin: 12px 0;
+        }
+        .error-badge {
+            display: inline-block;
+            padding: 8px 18px;
+            border-radius: 40px;
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            font-weight: 700;
+            font-size: 1.4rem;
+            margin: 12px 0;
+        }
+        .pending-badge {
+            display: inline-block;
+            padding: 8px 18px;
+            border-radius: 40px;
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+            font-weight: 700;
+            font-size: 1.4rem;
+            margin: 12px 0;
+        }
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(56, 189, 248, 0.2);
+            border-top-color: #38bdf8;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .poll-info {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            margin-top: 8px;
+        }
+        .xendit-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Status Pembayaran</h1>
+        <p>Mohon tunggu sementara kami memeriksa status pembayaran Anda...</p>
+        <div id="status-icon" class="check-icon"></div>
+        <div id="status-badge"></div>
+        <div id="poll-notice" class="poll-info">
+            <span class="spinner"></span>Memeriksa status pembayaran secara otomatis...
+        </div>
+        <a href="/" class="button">Kembali ke Beranda</a>
+        <a href="/send" class="button" style="background: transparent; border: 1px solid rgba(148,163,184,0.3); color: #cbd5e1;">Kirim Pesan Lagi</a>
+    </div>
+    <script>
+        const statusIcon = document.getElementById('status-icon');
+        const statusBadge = document.getElementById('status-badge');
+        const pollNotice = document.getElementById('poll-notice');
+
+        // Cek query params
+        const query = Object.fromEntries(new URLSearchParams(window.location.search).entries());
+        if (query.status === 'failed') {
+            statusIcon.textContent = '❌';
+            statusBadge.innerHTML = '<div class="error-badge">PEMBAYARAN GAGAL</div>';
+            pollNotice.innerHTML = 'Pembayaran gagal atau dibatalkan. Silakan coba lagi.';
+        }
+
+        // Cari paymentId dari URL
+        let paymentId = query.paymentId || query.payment_id || '';
+
+        // Fallback: coba dari localStorage
+        if (!paymentId) {
+            paymentId = localStorage.getItem('last_payment_id') || '';
+        }
+
+        if (paymentId) {
+            // Polling status pembayaran setiap 3 detik
+            // Pakai endpoint /xendit-status yang ngecek langsung ke Xendit API
+            const pollInterval = setInterval(async () => {
+                try {
+                    const res = await fetch(`/api/payment/${paymentId}/xendit-status`);
+                    const data = await res.json();
+
+                    if (data.success && data.request) {
+                        const status = data.request.status;
+
+                        if (status === 'paid') {
+                            statusIcon.textContent = '✅';
+                            statusBadge.innerHTML = '<div class="success-badge">PEMBAYARAN BERHASIL</div>';
+                            pollNotice.innerHTML = 'Pembayaran telah diterima! Pesan request lagu sudah masuk ke chat.';
+                            clearInterval(pollInterval);
+                        } else if (status === 'processed') {
+                            statusIcon.textContent = '✅';
+                            statusBadge.innerHTML = '<div class="success-badge">REQUEST DIPROSES</div>';
+                            pollNotice.innerHTML = 'Request lagu Anda sudah diproses oleh admin. Terima kasih!';
+                            clearInterval(pollInterval);
+                        } else if (status === 'failed') {
+                            statusIcon.textContent = '❌';
+                            statusBadge.innerHTML = '<div class="error-badge">PEMBAYARAN GAGAL</div>';
+                            pollNotice.innerHTML = 'Pembayaran gagal atau kadaluarsa. Silakan coba lagi.';
+                            clearInterval(pollInterval);
+                        } else {
+                            statusIcon.textContent = '⏳';
+                            statusBadge.innerHTML = '<div class="pending-badge">MENUNGGU PEMBAYARAN</div>';
+                            pollNotice.innerHTML = 'Pembayaran masih diproses. Mohon tunggu...';
+                        }
+                    }
+                } catch (err) {
+                    console.error('Polling error:', err);
+                }
+            }, 3000);
+
+            // Stop polling setelah 5 menit
+            setTimeout(() => {
+                clearInterval(pollInterval);
+                pollNotice.innerHTML = 'Polling dihentikan. Refresh halaman untuk cek status terbaru.';
+            }, 300000);
+        } else {
+            pollNotice.innerHTML = 'Tidak ada ID pembayaran yang ditemukan. Kembali ke beranda untuk memulai request baru.';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout Request Lagu</title>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #111827 100%);
+            color: white;
+            font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .page {
+            width: 100%;
+            max-width: 520px;
+        }
+
+        .checkout-card {
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(148, 163, 184, 0.12);
+            border-radius: 28px;
+            box-shadow: 0 20px 80px rgba(0, 0, 0, 0.35);
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 28px 28px 16px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2.1rem;
+            letter-spacing: -0.04em;
+        }
+
+        .header p {
+            margin: 12px auto 0;
+            max-width: 420px;
+            color: #cbd5e1;
+            line-height: 1.7;
+        }
+
+        .section {
+            padding: 22px 28px;
+            border-top: 1px solid rgba(148, 163, 184, 0.08);
+        }
+
+        .order-summary,
+        .payment-action {
+            margin-bottom: 22px;
+        }
+
+        .order-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+            color: #cbd5e1;
+        }
+
+        .order-row strong {
+            color: white;
+            font-weight: 600;
+        }
+
+        .button-primary {
+            width: 100%;
+            border: none;
+            border-radius: 16px;
+            background: linear-gradient(90deg, #38bdf8, #0284c7);
+            color: #0f172a;
+            font-weight: 700;
+            font-size: 1rem;
+            padding: 16px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .button-primary:hover {
+            opacity: 0.9;
+        }
+
+        .button-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .button-secondary {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 16px;
+            background: transparent;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            color: #cbd5e1;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+
+        .button-secondary:hover {
+            border-color: rgba(148, 163, 184, 0.4);
+        }
+
+        .info-note {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        .note-banner {
+            padding: 16px 18px;
+            background: rgba(59, 130, 246, 0.12);
+            border-radius: 18px;
+            color: #e0f2fe;
+            font-size: 0.96rem;
+            margin-top: 12px;
+        }
+
+        .pay-methods {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .pay-method-tag {
+            padding: 6px 14px;
+            border-radius: 20px;
+            background: rgba(148, 163, 184, 0.1);
+            color: #94a3b8;
+            font-size: 0.85rem;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0,0,0,0.1);
+            border-top-color: #0f172a;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="checkout-card">
+            <div class="header">
+                <h1>Checkout Request Lagu</h1>
+                <p id="checkout-detail">Memuat informasi pembayaran ...</p>
+            </div>
+
+            <div class="section order-summary">
+                <div class="order-row">
+                    <span>Permintaan</span>
+                    <strong id="order-song">-</strong>
+                </div>
+                <div class="order-row">
+                    <span>Nama</span>
+                    <strong id="order-user">-</strong>
+                </div>
+                <div class="order-row">
+                    <span>Total Bayar</span>
+                    <strong id="order-amount">Rp 0</strong>
+                </div>
+            </div>
+
+            <div class="section payment-action">
+                <div id="payment-methods-info" style="display:none; margin-bottom:16px;">
+                    <div style="color:#94a3b8; font-size:0.9rem; margin-bottom:8px;">Metode pembayaran:</div>
+                    <div class="pay-methods">
+                        <span class="pay-method-tag">QRIS</span>
+                    </div>
+                </div>
+
+                <div class="status-box" id="status-box" style="display:none;">
+                    <strong>Status:</strong>
+                    <p id="status-text"></p>
+                </div>
+
+                <button class="button-primary" id="xendit-button" style="display:none;">
+                    Bayar via Xendit
+                </button>
+                <button class="button-primary" id="complete-button" style="display:none;">
+                    Bayar Sekarang (simulasi)
+                </button>
+                <button class="button-secondary" id="refresh-button" style="display:none;">
+                    Muat ulang status
+                </button>
+                <a class="button-secondary" id="home-link" href="/" style="display:inline-block; text-decoration:none; text-align:center; margin-top:12px;">
+                    Kembali ke Beranda
+                </a>
+                <div class="note-banner" id="payment-note" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const paymentId = window.location.pathname.split('/').pop();
+        const detail = document.getElementById('checkout-detail');
+        const statusBox = document.getElementById('status-box');
+        const statusText = document.getElementById('status-text');
+        const xenditButton = document.getElementById('xendit-button');
+        const completeButton = document.getElementById('complete-button');
+        const refreshButton = document.getElementById('refresh-button');
+        const paymentNote = document.getElementById('payment-note');
+        const paymentMethodsInfo = document.getElementById('payment-methods-info');
+        const orderSong = document.getElementById('order-song');
+        const orderUser = document.getElementById('order-user');
+        const orderAmount = document.getElementById('order-amount');
+        let currentXenditUrl = null;
+
+        async function loadPayment() {
+            try {
+                localStorage.setItem('last_payment_id', paymentId);
+
+                const res = await fetch(`/api/payment/${paymentId}`);
+                const data = await res.json();
+
+                if (!data.success) {
+                    detail.textContent = data.message || 'Gagal memuat informasi pembayaran.';
+                    return;
+                }
+
+                const request = data.request;
+                orderSong.textContent = request.song;
+                orderUser.textContent = request.username;
+                orderAmount.textContent = `Rp ${(request.amount || 0).toLocaleString('id-ID')}`;
+                detail.textContent = `Bayar request lagu "${request.song}" oleh ${request.username}.`;
+                statusText.textContent = `Status: ${request.status.toUpperCase()}`;
+                statusBox.style.display = 'block';
+
+                if (request.status === 'pending') {
+                    currentXenditUrl = request.xenditInvoiceUrl || request.invoiceUrl || null;
+
+                    if (currentXenditUrl) {
+                        // Xendit invoice URL available
+                        xenditButton.style.display = 'block';
+                        xenditButton.innerHTML = 'Bayar via Xendit';
+                        completeButton.style.display = 'none';
+                        paymentMethodsInfo.style.display = 'block';
+                        paymentNote.style.display = 'block';
+                        paymentNote.textContent = 'Klik tombol di atas untuk membuka halaman pembayaran Xendit. Bayar via scan QRIS dengan aplikasi bank atau e-wallet Anda.';
+                    } else {
+                        // No Xendit URL - show simulation fallback
+                        xenditButton.style.display = 'none';
+                        completeButton.style.display = 'block';
+                        completeButton.textContent = 'Bayar Sekarang (simulasi)';
+                        paymentNote.style.display = 'block';
+                        paymentNote.textContent = 'Xendit invoice tidak tersedia. Gunakan tombol simulasi untuk testing lokal.';
+                    }
+                    refreshButton.style.display = 'block';
+                } else {
+                    currentXenditUrl = null;
+                    xenditButton.style.display = 'none';
+                    completeButton.style.display = 'none';
+                    refreshButton.style.display = 'block';
+                    paymentNote.style.display = 'block';
+
+                    if (request.status === 'paid') {
+                        paymentNote.textContent = '✅ Pembayaran sudah diterima! Tunggu admin memproses request Anda.';
+                    } else if (request.status === 'processed') {
+                        paymentNote.textContent = '✅ Request lagu sudah diproses oleh admin. Terima kasih!';
+                    } else if (request.status === 'failed') {
+                        paymentNote.textContent = '❌ Pembayaran gagal atau kadaluarsa. Silakan coba lagi.';
+                    } else {
+                        paymentNote.textContent = `Status pembayaran: ${request.status}`;
+                    }
+                }
+            } catch (error) {
+                detail.textContent = 'Terjadi kesalahan saat memuat pembayaran.';
+            }
+        }
+
+        async function completePayment() {
+            try {
+                completeButton.disabled = true;
+                completeButton.innerHTML = '<span class="spinner"></span>Memproses...';
+
+                const res = await fetch(`/api/payment/${paymentId}/complete`, {
+                    method: 'POST'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    await loadPayment();
+                } else {
+                    detail.textContent = data.message || 'Pembayaran gagal.';
+                    completeButton.disabled = false;
+                    completeButton.textContent = 'Bayar Sekarang (simulasi)';
+                }
+            } catch (error) {
+                detail.textContent = 'Terjadi kesalahan saat menyelesaikan pembayaran.';
+                completeButton.disabled = false;
+                completeButton.textContent = 'Bayar Sekarang (simulasi)';
+            }
+        }
+
+        xenditButton.addEventListener('click', () => {
+            if (currentXenditUrl) {
+                window.location.href = currentXenditUrl;
+            } else {
+                detail.textContent = 'URL pembayaran tidak tersedia.';
+            }
+        });
+
+        completeButton.addEventListener('click', completePayment);
+        refreshButton.addEventListener('click', loadPayment);
+        loadPayment();
+    </script>
+</body>
+</html>

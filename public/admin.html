@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Panel</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .login-container h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .login-container input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .login-container input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .login-container button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .login-container button:hover {
+            transform: translateY(-2px);
+        }
+
+        .login-container button:active {
+            transform: translateY(0);
+        }
+
+        #admin-panel {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 15px;
+        }
+
+        .admin-header h1 {
+            color: #333;
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .logout-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+
+        .admin-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .admin-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .admin-controls button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .admin-controls button:hover {
+            background: #764ba2;
+        }
+
+        .admin-controls button.danger {
+            background: #e74c3c;
+        }
+
+        .admin-controls button.danger:hover {
+            background: #c0392b;
+        }
+
+        .admin-chat-panel {
+            background: #eef2ff;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #dbe1ff;
+            margin-bottom: 20px;
+        }
+
+        .admin-chat-panel h2 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .admin-chat-panel textarea {
+            width: 100%;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            min-height: 100px;
+            padding: 12px;
+            resize: vertical;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .admin-chat-panel .admin-send-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .admin-chat-panel .admin-send-btn:hover {
+            background: #059669;
+        }
+
+        .admin-requests-panel {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #d1d5db;
+            margin-bottom: 20px;
+        }
+
+        .admin-requests-panel h2 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .request-item {
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }
+
+        .request-item .request-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .request-item .request-title {
+            font-weight: bold;
+            color: #111827;
+        }
+
+        .request-item .request-meta {
+            font-size: 13px;
+            color: #4b5563;
+        }
+
+        .request-item .request-note {
+            margin: 10px 0;
+            color: #374151;
+        }
+
+        .request-item button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .request-item button:hover {
+            background: #2563eb;
+        }
+
+        .request-item .status-paid {
+            color: #15803d;
+            font-weight: bold;
+        }
+
+        .request-item .status-pending {
+            color: #b45309;
+            font-weight: bold;
+        }
+
+        .request-item .status-processed {
+            color: #6b7280;
+            font-weight: bold;
+        }
+
+        .messages-section h2 {
+            color: #333;
+            margin-top: 0;
+        }
+
+        .message-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            gap: 10px;
+        }
+
+        .message-content {
+            flex: 1;
+        }
+
+        .message-user {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .message-text {
+            color: #333;
+            margin-bottom: 5px;
+            line-height: 1.4;
+        }
+
+        .message-time {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .message-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .message-actions button {
+            padding: 6px 12px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s;
+        }
+
+        .message-actions button:hover {
+            background: #c0392b;
+        }
+
+        .message-actions button.ban {
+            background: #f39c12;
+        }
+
+        .message-actions button.ban:hover {
+            background: #d68910;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+        }
+
+        .banned-users-section {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #ffc107;
+        }
+
+        .banned-users-section h3 {
+            color: #856404;
+            margin-top: 0;
+        }
+
+        .banned-user-item {
+            background: white;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .banned-user-name {
+            font-weight: bold;
+            color: #e74c3c;
+        }
+
+        .unban-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s;
+        }
+
+        .unban-btn:hover {
+            background: #229954;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #27ae60;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            display: none;
+            animation: slideIn 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.error {
+            background: #e74c3c;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- LOGIN FORM -->
+    <div class="login-container" id="login-container">
+        <h1>🔐 Admin Panel</h1>
+        <input type="password" id="password-input" placeholder="Masukkan password admin" />
+        <button type="button" onclick="loginAdmin()">Login</button>
+    </div>
+
+    <!-- ADMIN PANEL -->
+    <div id="admin-panel">
+        <div class="admin-header">
+            <h1>📊 Admin Panel</h1>
+            <button class="logout-btn" onclick="logoutAdmin()">Logout</button>
+        </div>
+
+        <!-- STATS -->
+        <div class="admin-stats">
+            <div class="stat-card">
+                <h3>Total Pesan</h3>
+                <div class="value" id="total-messages">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total User</h3>
+                <div class="value" id="total-users">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Request Lagu</h3>
+                <div class="value" id="total-requests">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>User Banned</h3>
+                <div class="value" id="total-banned">0</div>
+            </div>
+        </div>
+
+        <!-- BANNED USERS SECTION -->
+        <div class="banned-users-section" id="banned-users-section" style="display: none;">
+            <h3>⛔ User yang Di-Ban</h3>
+            <div id="banned-users-list"></div>
+        </div>
+
+        <!-- CONTROLS -->
+        <div class="admin-controls">
+            <button onclick="refreshData()">🔄 Refresh</button>
+            <button class="danger" onclick="clearAllMessages()">🗑️ Hapus Semua Pesan</button>
+        </div>
+
+        <!-- REQUEST LAGU -->
+        <div class="admin-requests-panel">
+            <h2>🎵 Request Lagu Berbayar</h2>
+            <div id="request-list">
+                <div class="empty-state">Tidak ada request lagu.</div>
+            </div>
+        </div>
+
+        <!-- ADMIN CHAT -->
+        <div class="admin-chat-panel">
+            <h2>✉️ Kirim Chat Admin</h2>
+            <textarea id="admin-message-input" rows="4" placeholder="Tulis pesan admin..."></textarea>
+            <button class="admin-send-btn" type="button" onclick="sendAdminMessage()">Kirim Pesan Admin</button>
+        </div>
+
+        <!-- SOUND NOTIFICATION SETTINGS -->
+        <div class="admin-chat-panel">
+            <h2>🔊 Sound Notifikasi Alert</h2>
+            <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 12px;">Upload file audio custom untuk sound notifikasi request lagu</p>
+            <input type="file" id="sound-upload-input" accept="audio/*" style="margin-bottom: 10px; color: #cbd5e1;">
+            <button class="admin-send-btn" type="button" onclick="uploadCustomSound()">Upload Sound</button>
+            <div id="sound-upload-status" style="font-size: 0.85rem; color: #94a3b8; margin-top: 10px;">Status: Siap upload</div>
+        </div>
+
+        <!-- MESSAGES SECTION -->
+        <div class="messages-section">
+            <h2>💬 Daftar Pesan</h2>
+            <div id="messages-list">
+                <div class="empty-state">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let isLoggedIn = false;
+        let messageData = [];
+        let userData = new Set();
+        let bannedUsers = new Set();
+        let songRequests = [];
+
+        socket.on('connect', () => {
+            console.log('Socket.io admin connected:', socket.id);
+            showNotification('Koneksi admin berhasil.', 'success');
+        });
+
+        socket.on('disconnect', (reason) => {
+            console.warn('Socket.io admin disconnected:', reason);
+            if (isLoggedIn) {
+                showNotification('Koneksi terputus. Reload halaman.', 'error');
+            }
+        });
+
+        socket.on('connect_error', (error) => {
+            console.error('Socket.io admin connect error:', error);
+            showNotification('Gagal koneksi admin. Coba reload halaman.', 'error');
+        });
+
+        function loginAdmin() {
+            const passwordInput = document.getElementById('password-input');
+            const password = passwordInput.value.trim();
+
+            if (!password) {
+                showNotification('Masukkan password terlebih dahulu', 'error');
+                return;
+            }
+
+            socket.emit('admin_login', { password });
+        }
+
+        function logoutAdmin() {
+            isLoggedIn = false;
+            localStorage.removeItem('admin_logged_in');
+            document.getElementById('login-container').style.display = 'flex';
+            document.getElementById('admin-panel').style.display = 'none';
+            document.getElementById('password-input').value = '';
+            showNotification('Logout berhasil!', 'success');
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = 'notification ' + (type === 'error' ? 'error' : '');
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        function requestAdminData() {
+            socket.emit('get_admin_data', {});
+        }
+
+        function uploadCustomSound() {
+            const fileInput = document.getElementById('sound-upload-input');
+            const file = fileInput.files[0];
+            const statusDiv = document.getElementById('sound-upload-status');
+
+            if (!file) {
+                showNotification('Pilih file audio terlebih dahulu', 'error');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const soundData = event.target.result;
+                localStorage.setItem('customNotificationSound', soundData);
+                
+                statusDiv.innerHTML = `✅ Sound berhasil diupload: <strong>${file.name}</strong>`;
+                statusDiv.style.color = '#10b981';
+                
+                showNotification(`Sound updated: ${file.name}`, 'success');
+                fileInput.value = '';
+            };
+
+            reader.onerror = () => {
+                showNotification('Gagal membaca file', 'error');
+                statusDiv.innerHTML = '❌ Gagal upload sound';
+                statusDiv.style.color = '#e74c3c';
+            };
+
+            reader.readAsDataURL(file);
+        }
+
+        function refreshData() {
+            if (!isLoggedIn) return;
+            requestAdminData();
+            showNotification('Data diperbarui!', 'success');
+        }
+
+        function deleteMessage(index) {
+            if (confirm('Hapus pesan ini?')) {
+                socket.emit('admin_delete_message', { index });
+            }
+        }
+
+        function banUser(username) {
+            if (confirm(`Ban user "${username}"?`)) {
+                socket.emit('admin_ban_user', { username });
+            }
+        }
+
+        function unbanUser(username) {
+            socket.emit('admin_unban_user', { username });
+        }
+
+        function clearAllMessages() {
+            if (confirm('Yakin hapus SEMUA pesan? Tindakan ini tidak bisa dibatalkan!')) {
+                if (confirm('Pastikan lagi!')) {
+                    socket.emit('admin_clear_all_messages', {});
+                }
+            }
+        }
+
+        function sendAdminMessage() {
+            const adminInput = document.getElementById('admin-message-input');
+            const text = adminInput.value.trim();
+
+            if (!text) {
+                showNotification('Tulis pesan admin terlebih dahulu.', 'error');
+                return;
+            }
+
+            socket.emit('new_message', {
+                admin: true,
+                text,
+                agree: true
+            });
+        }
+
+        socket.on('send_success', () => {
+            const adminInput = document.getElementById('admin-message-input');
+            adminInput.value = '';
+            showNotification('Pesan admin terkirim!', 'success');
+        });
+
+        socket.on('admin_login_success', () => {
+            isLoggedIn = true;
+            localStorage.setItem('admin_logged_in', 'true');
+            document.getElementById('login-container').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'block';
+            document.getElementById('password-input').value = '';
+            showNotification('Login berhasil!', 'success');
+            requestAdminData();
+        });
+
+        socket.on('admin_login_failed', () => {
+            showNotification('Password salah!', 'error');
+            document.getElementById('password-input').value = '';
+        });
+
+        socket.on('admin_forbidden', () => {
+            isLoggedIn = false;
+            localStorage.removeItem('admin_logged_in');
+            document.getElementById('login-container').style.display = 'flex';
+            document.getElementById('admin-panel').style.display = 'none';
+            showNotification('Akses tidak diizinkan. Silakan login kembali.', 'error');
+        });
+
+        socket.on('send_success', () => {
+            // fallback in case admin sends via new_message
+            const adminInput = document.getElementById('admin-message-input');
+            if (adminInput) {
+                adminInput.value = '';
+            }
+            showNotification('Pesan admin terkirim!', 'success');
+        });
+
+        socket.on('admin_data', (data) => {
+            messageData = data.messages || [];
+            userData = new Set(data.users || []);
+            bannedUsers = new Set(data.banned_users || []);
+            songRequests = data.song_requests || [];
+
+            // Update stats
+            document.getElementById('total-messages').textContent = messageData.length;
+            document.getElementById('total-users').textContent = userData.size;
+            document.getElementById('total-requests').textContent = songRequests.length;
+            document.getElementById('total-banned').textContent = bannedUsers.size;
+
+            // Render messages
+            renderMessages();
+            renderBannedUsers();
+            renderSongRequests();
+        });
+
+        socket.on('admin_request_update', (data) => {
+            songRequests = data.song_requests || [];
+            renderSongRequests();
+        });
+
+        function renderMessages() {
+            const messagesList = document.getElementById('messages-list');
+
+            if (messageData.length === 0) {
+                messagesList.innerHTML = '<div class="empty-state">Tidak ada pesan</div>';
+                return;
+            }
+
+            messagesList.innerHTML = messageData
+                .map((msg, index) => `
+                    <div class="message-item">
+                        <div class="message-content">
+                            <div class="message-user">@${msg.username}</div>
+                            <div class="message-text">${msg.text}</div>
+                            <div class="message-time">${msg.time}</div>
+                        </div>
+                        <div class="message-actions">
+                            <button onclick="deleteMessage(${index})">Hapus</button>
+                            <button class="ban" onclick="banUser('${msg.username}')">Ban</button>
+                        </div>
+                    </div>
+                `)
+                .join('');
+        }
+
+        function renderBannedUsers() {
+            const section = document.getElementById('banned-users-section');
+            const list = document.getElementById('banned-users-list');
+
+            if (bannedUsers.size === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = 'block';
+            list.innerHTML = Array.from(bannedUsers)
+                .map(user => `
+                    <div class="banned-user-item">
+                        <span class="banned-user-name">${user}</span>
+                        <button class="unban-btn" onclick="unbanUser('${user}')">Unban</button>
+                    </div>
+                `)
+                .join('');
+        }
+
+        function renderSongRequests() {
+            const list = document.getElementById('request-list');
+
+            if (!songRequests || songRequests.length === 0) {
+                list.innerHTML = '<div class="empty-state">Tidak ada request lagu.</div>';
+                return;
+            }
+
+            list.innerHTML = songRequests
+                .map(request => {
+                    const statusClass = request.status === 'paid' ? 'status-paid' : request.status === 'processed' ? 'status-processed' : 'status-pending';
+                    return `
+                        <div class="request-item">
+                            <div class="request-header">
+                                <div class="request-title">${request.song} oleh ${request.username}</div>
+                                <div class="request-meta ${statusClass}">${request.status.toUpperCase()}</div>
+                            </div>
+                            <div class="request-meta">Rp ${request.amount.toLocaleString('id-ID')} • ${new Date(request.createdAt).toLocaleString('id-ID')}</div>
+                            <div class="request-note">${request.note || 'Tidak ada catatan tambahan.'}</div>
+                            ${request.status === 'paid' ? `<button onclick="markRequestDone('${request.id}')">Tandai Selesai</button>` : ''}
+                        </div>
+                    `;
+                })
+                .join('');
+        }
+
+        function markRequestDone(requestId) {
+            if (!confirm('Tandai request ini selesai?')) return;
+            socket.emit('admin_mark_request_done', { id: requestId });
+        }
+
+        // Check if already logged in
+        window.addEventListener('load', () => {
+            if (localStorage.getItem('admin_logged_in') === 'true') {
+                document.getElementById('login-container').style.display = 'none';
+                document.getElementById('admin-panel').style.display = 'block';
+                requestAdminData();
+                isLoggedIn = true;
+            }
+        });
+
+        // Update data setiap 2 detik
+        setInterval(() => {
+            if (isLoggedIn) {
+                requestAdminData();
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

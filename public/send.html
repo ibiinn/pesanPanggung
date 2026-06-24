@@ -133,42 +133,12 @@
             color:#224230
         }
 
-        .hbd img{
-            padding-right: 50px;
-            max-width: fit-content;
-            width: 120px;
-            border-radius: 45px;
-        }
-
-        .hbd h2{
-            font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-weight: lighter;
-            font-size: 25px;
-            text-align: left;
-            color: #000000;
-        }
-
-        .hbd {
-            height: 150px;
-            padding-left: 45px;
-            background: linear-gradient(to right, rgb(209, 131, 226), rgb(235, 235, 235));
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            border-radius: 15px;
-        }
         
 
     </style>
 </head>
 <body>
     <form id="f">
-        <!-- sementara -->
-        <div class="hbd">
-            <h2>HAPPY BIRTHDAY RAHOM</h2>
-            <img src="rahom.png" alt="rahom">
-        </div>
-        <!-- sementara -->
         <h2>Kirim Pesan</h2>
         <div class="wrap">
             <p>Saya bertanggung jawab atas chat yang saya tampilkan di layar dan bersedia untuk tidak menggunakan kata-kata yang tidak pantas.<br></p>
@@ -182,7 +152,10 @@
         <input id="u" type="text" placeholder="Username (max 10 char)" maxlength="10" required>
         <textarea id="i" placeholder="Ketik pesanmu..." required maxlength=""></textarea>
         <button type="submit">kirim sekarang</button>
-        <a href="https://saweria.co/djamoancoffee">Request/Sawer</a>
+        <!-- <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:center;"> -->
+            <a href="https://saweria.co/djamoancoffee">Request/Sawer</a>
+            <!-- <a href="/request">Request Lagu Berbayar</a> -->
+        </div>
 
     </form>
 
@@ -194,6 +167,20 @@
         const inputMsg = document.getElementById('i');
         const agree = document.getElementById('agree');
         const btn = document.querySelector("button[type='submit']");
+
+        socket.on('connect', () => {
+            console.log('Socket.io send connected:', socket.id);
+        });
+
+        socket.on('disconnect', (reason) => {
+            console.warn('Socket.io send disconnected:', reason);
+            alert('Koneksi terputus. Reload halaman sebelum mengirim pesan.');
+        });
+
+        socket.on('connect_error', (error) => {
+            console.error('Socket.io send connect error:', error);
+            alert('Tidak dapat terhubung ke server. Pastikan server berjalan.');
+        });
         const savedUsername = localStorage.getItem("locked_username");
         const user = inputUser.value.trim();
         const bannedWords = ["anjing", "babi", "kontol", "memek", "ngentot", "tai"];
@@ -286,6 +273,17 @@
 
         socket.on("max_word_exceeded", () => {
             alert("Pesan terlalu panjang! Maksimal 20 kata.");
+        });
+
+        socket.on("bad_word", () => {
+            alert("Pesan mengandung kata yang tidak pantas!");
+        });
+
+        socket.on("user_banned", () => {
+            alert("Username kamu telah di-ban oleh admin. Hubungi admin jika ada pertanyaan.");
+            inputUser.disabled = true;
+            inputMsg.disabled = true;
+            btn.disabled = true;
         });
 
     </script>
